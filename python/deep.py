@@ -1,6 +1,7 @@
 import scipy.io
 import keras
 import numpy as np
+from sklearn.metrics import confusion_matrix
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
@@ -49,37 +50,36 @@ model = Sequential()
 
 # input: 100x100 images with 3 channels -> (100, 100, 3) tensors.
 # this applies 32 convolution filters of size 3x3 each.
-model.add(Conv2D(32, (3, 3), padding='same', input_shape=INPUT_SHAPE))
-model.add(Activation('relu'))
-model.add(Conv2D(32, (3, 3)))
-model.add(Activation('relu'))
+model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=INPUT_SHAPE))
+model.add(Conv2D(32, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
 
 model.add(Conv2D(64, (3, 3), padding='same'))
-model.add(Activation('relu'))
-model.add(Conv2D(64, (3, 3)))
-model.add(Activation('relu'))
+model.add(Conv2D(64, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
 
 model.add(Flatten())
-model.add(Dense(512))
-model.add(Activation('relu'))
+model.add(Dense(512,activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(NUM_CLASSES))
-model.add(Activation('softmax'))
+model.add(Dense(2, activation='softmax'))
 
 # encode to one hot
-y_train = to_categorical(y_train, num_classes=2)
-y_test = to_categorical(y_test, num_classes=2)
+y_train_c = to_categorical(y_train, num_classes=2)
+y_val_c = to_categorical(y_val, num_classes=2)
+y_test_c = to_categorical(y_test, num_classes=2)
 
 optimizer = Adam(lr=0.001, decay=1e-6)
 #model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=optimizer)
-model.compile(loss='binary_crossentropy', metrics=['accuracy'], optimizer=optimizer)
+model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=optimizer)
 
 while True:
-	model.fit(x_train, y_train, batch_size=128, epochs=1)
-	score = model.evaluate(x_test, y_test, batch_size=32)
-	print("score",score)
+	#model.fit(x_train, y_train, batch_size=128, epochs=1)
+	model.fit(x_val, y_val_c, batch_size=128, epochs=1)
+	y_pred = model.predict(x_test, batch_size=32)
+	y_pred = np.argmax(y_pred, axis=1)
+	print(confusion_matrix(y_test, y_pred))
+
 
