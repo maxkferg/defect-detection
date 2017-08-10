@@ -1,12 +1,14 @@
 import scipy.io
 import keras
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.optimizers import Adam
 from keras.utils.np_utils import to_categorical
+from keras.regularizers import l2
 
 TRAIN = 1
 TEST = 3
@@ -24,8 +26,6 @@ labels = data[2].flatten()-1
 dataset = data[4].flatten()
 n = len(ids)
 
-print(labels)
-
 # Load images
 x_train = np.stack([images[:,:,i,None] for i in range(n) if dataset[i]==TRAIN])
 x_val = np.stack([images[:,:,i,None] for i in range(n) if dataset[i]==VAL])
@@ -39,6 +39,15 @@ y_test = np.stack([labels[i] for i in range(n) if dataset[i]==TEST])
 print("Loaded {0} training samples".format(len(y_train)))
 print("Loaded {0} validation samples".format(len(y_val)))
 print("Loaded {0} testing samples".format(len(y_test)))
+
+
+"""
+for i in range(10):
+	print(x_train[i+1000,:,:,0])
+	plt.imshow(x_train[i+1000,:,:,0], cmap='gray')
+	plt.show()
+"""
+
 
 # Generate dummy data
 #x_train = np.random.random((100, 100, 100, 3))
@@ -63,7 +72,7 @@ model.add(Dropout(0.25))
 model.add(Flatten())
 model.add(Dense(512,activation='relu'))
 model.add(Dropout(0.5))
-model.add(Dense(NUM_CLASSES))
+model.add(Dense(NUM_CLASSES, W_regularizer=l2(0.01)))
 model.add(Dense(2, activation='softmax'))
 
 # encode to one hot
